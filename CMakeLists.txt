@@ -12,6 +12,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 
 #
+# Target: protodb1
+#
+
+add_executable(protodb1 src/main.cc)
+target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include")
+
+#
 # Compiler Tools
 #
 
@@ -40,9 +47,3 @@ if(${CLANG_FORMAT_FOUND})
     ${BUILD_SUPPORT_DIR}/clang_format_exclusions.txt --source_dir
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 endif()
-
-#
-# Outputs
-#
-
-add_executable(protodb1 src/main.cc)
