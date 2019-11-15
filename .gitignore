@@ -7,3 +7,7 @@
 # IDE files
 
 /.vscode
+
+# Misc. tool files
+
+/Pipfile.lock

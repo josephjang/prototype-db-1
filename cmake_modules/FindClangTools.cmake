@@ -1,0 +1,27 @@
+set(CLANG_TOOLS_SEARCH_PATHS /usr/local/bin /usr/bin)
+
+find_program(
+  CLANG_FORMAT_BIN
+  NAMES clang-format
+  PATHS ${CLANG_TOOLS_SEARCH_PATHS}
+  NO_DEFAULT_PATH)
+
+if(CLANG_FORMAT_BIN)
+  unset(CLANG_FORMAT_VERSION_MESSAGE)
+  execute_process(
+    COMMAND ${CLANG_FORMAT_BIN} "-version"
+    OUTPUT_VARIABLE CLANG_FORMAT_VERSION_MESSAGE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT (${CLANG_FORMAT_VERSION_MESSAGE} MATCHES
+          ${CLANG_FORMAT_VERSION_PATTERN}))
+    set(CLANG_FORMAT_BIN "CLANG_FORMAT_BIN-NOTFOUND")
+  endif()
+endif()
+
+if(CLANG_FORMAT_BIN)
+  set(CLANG_FORMAT_FOUND 1)
+  message(STATUS "clang-format found at ${CLANG_FORMAT_BIN}")
+else()
+  set(CLANG_FORMAT_FOUND 0)
+  message(STATUS "clang-format not found")
+endif()
