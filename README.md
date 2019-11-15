@@ -15,3 +15,7 @@ It will be hardly a database but it will help to get familiar to how to structur
 - Protocol: Redis protocol (GET/SET/DEL)
 - Supports concurrent access: multi-threaded
 - No index support.
+
+## Contribution
+
+Please read [docs/coding-style-guide.md].

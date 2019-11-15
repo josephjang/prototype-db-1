@@ -1,0 +1,9 @@
+# .gitignore
+
+# Build outputs
+
+/build
+
+# IDE files
+
+/.vscode
