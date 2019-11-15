@@ -2,4 +2,5 @@
 
 ## C++
 
-[Google's C++ style guide](https://google.github.io/styleguide/cppguide.html) will be used by default.
+* [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html) will be used by default.
+* C++14 will be used.
