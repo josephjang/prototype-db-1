@@ -17,6 +17,15 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 
 add_executable(protodb1 src/main.cc)
 target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_sources(protodb1 PRIVATE src/echo_server.cc)
+
+#
+# Libraries: Libuv
+#
+
+find_package(Libuv REQUIRED)
+target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
+target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
 
 #
 # Compiler Tools
