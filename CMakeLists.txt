@@ -4,6 +4,7 @@ project(prototype-db-1)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
@@ -17,7 +18,7 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 
 add_executable(protodb1 src/main.cc)
 target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include")
-target_sources(protodb1 PRIVATE src/echo_server.cc)
+target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
 
 #
 # Libraries: Libuv
