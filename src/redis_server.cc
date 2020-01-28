@@ -83,20 +83,22 @@ void protodb1::RedisServer::HandleReadData(uv_stream_t *stream, ssize_t nread,
   ParseLines(session);
 }
 
-void protodb1::RedisServer::ParseLines (RedisClientSession *session) {
-  auto pos = session->incoming_buffer.find_first_of("\r\n");
+void protodb1::RedisServer::ParseLines(RedisClientSession *session) {
+  auto start_pos = 0;
+  auto pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
 
   while (pos != std::string::npos) {
-    const auto& line = session->incoming_buffer.substr(0, pos);
+    //spdlog::debug("start: {}, pos: {}", start_pos, pos);
+    const auto& line = session->incoming_buffer.substr(start_pos, pos - start_pos);
+    session->lines.emplace_back(line);
     SPDLOG_DEBUG("session line parsed: {} bytes", line.length());
-    auto next_cmd_pos = session->incoming_buffer.find_first_not_of("\r\n", pos);
-    session->incoming_buffer.erase(0, next_cmd_pos);
-    SPDLOG_DEBUG("session incoming buffer remaining after truncated: {} bytes",
-                  session->incoming_buffer.length());
-    // extra copy
-    session->lines.push_back(line);
-    pos = session->incoming_buffer.find_first_of("\r\n");
+    //spdlog::debug("session line parsed: {} bytes, '{}'", line.length(), line);
+    start_pos = session->incoming_buffer.find_first_not_of("\r\n", pos);
+    pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
   }
+  session->incoming_buffer.erase(0, start_pos);
+  SPDLOG_DEBUG("session incoming buffer remaining after truncated: {} bytes",
+               session->incoming_buffer.length());
   ParseCommand(session);
 }
 
@@ -179,7 +181,8 @@ void protodb1::RedisServer::HandleCommand(RedisClientSession *session,
   if (command == "PING") {
     WriteResponse(stream, "+PONG\r\n");
   } else if (command == "SET") {
-    session->GetServer()->storage_engine_->Set(command_array[1].c_str(), command_array[1].length(), command_array[2].c_str(), command_array[2].length());
+    //session->GetServer()->storage_engine_->Set(command_array[1].c_str(), command_array[1].length(), command_array[2].c_str(), command_array[2].length());
+    session->GetServer()->storage_engine_->Set(command_array[1], command_array[2]);
     WriteResponse(stream, "+OK\r\n");
   } else {
     char resp_buf[1024];
@@ -308,7 +311,7 @@ void protodb1::RedisServer::Run() {
   uv_signal_init(&loop, &sigterm);
   uv_signal_start(&sigterm, HandleSigTerm, SIGTERM);
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 1; i++) {
     uv_thread_t thread_handle;
     uv_thread_create(&thread_handle, RunServer, this);
   }
