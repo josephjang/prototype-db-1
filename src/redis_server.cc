@@ -308,26 +308,55 @@ void protodb1::RedisServer::Run() {
   uv_signal_init(&loop, &sigterm);
   uv_signal_start(&sigterm, HandleSigTerm, SIGTERM);
 
-  int r = uv_tcp_init(&loop, &server);
+  for (int i = 0; i < 2; i++) {
+    uv_thread_t thread_handle;
+    uv_thread_create(&thread_handle, RunServer, this);
+  }
+
+  uv_run(&loop, UV_RUN_DEFAULT);
+  spdlog::warn("uv loop is finished");
+
+  uv_close(reinterpret_cast<uv_handle_t *>(&server), HandleClose);
+}
+
+void protodb1::RedisServer::RunServer(void *arg) {
+  uv_loop_t loop;
+  uv_tcp_t server_handle;
+
+  uv_loop_init(&loop);
+
+  int r = uv_tcp_init_ex(&loop, &server_handle, AF_INET);
   if (r != 0) {
     spdlog::error("failed to initialize libuv tcp handle: {}", uv_strerror(r));
     throw std::runtime_error(uv_strerror(r));
   }
 
+  auto server = static_cast<RedisServer *>(arg);
+  server_handle.data = server;
+
   sockaddr_in addr;
-  r = uv_ip4_addr("0.0.0.0", port, &addr);
+  r = uv_ip4_addr("0.0.0.0", 6379, &addr);
   if (r != 0) {
     spdlog::error("failed to convert server address: {}", uv_strerror(r));
     throw std::runtime_error(uv_strerror(r));
   }
 
-  r = uv_tcp_bind(&server, reinterpret_cast<const struct sockaddr *>(&addr), 0);
+  uv_os_fd_t fd;
+  int on = 1;
+  uv_fileno(reinterpret_cast<uv_handle_t *>(&server_handle), &fd);
+  r = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (char *)&on, sizeof(on));
+  if (r != 0) {
+    spdlog::error("failed to set the socket option SO_REUSEPORT: fd: {}, {}", fd, uv_strerror(r));
+    throw std::runtime_error(uv_strerror(r));
+  }
+
+  r = uv_tcp_bind(&server_handle, reinterpret_cast<const struct sockaddr *>(&addr), 0);
   if (r != 0) {
     spdlog::error("failed to bind server: {}", uv_strerror(r));
     throw std::runtime_error(uv_strerror(r));
   }
 
-  r = uv_listen(reinterpret_cast<uv_stream_t *>(&server), 100,
+  r = uv_listen(reinterpret_cast<uv_stream_t *>(&server_handle), 100,
                 HandleIncomingConnection);
   if (r != 0) {
     spdlog::error("failed to listen server: {}", uv_strerror(r));
@@ -337,5 +366,5 @@ void protodb1::RedisServer::Run() {
   uv_run(&loop, UV_RUN_DEFAULT);
   spdlog::warn("uv loop is finished");
 
-  uv_close(reinterpret_cast<uv_handle_t *>(&server), HandleClose);
+  uv_close(reinterpret_cast<uv_handle_t *>(&server_handle), HandleClose);
 }
