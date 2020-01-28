@@ -142,9 +142,7 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
         }
         
         if (array_started && --array_length_remaining <= 0) {
-          uv_stream_t *stream =
-              reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
-          HandleCommand(stream, command_array);
+          HandleCommand(session, command_array);
           command_array.clear();
 
           pos_to_be_erased = it + 1;
@@ -153,9 +151,7 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
           array_started = false;
           array_length_remaining = -1;
         } else if (!array_started) {
-          uv_stream_t *stream =
-              reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
-          HandleCommand(stream, command_array);
+          HandleCommand(session, command_array);
           command_array.clear();
 
           pos_to_be_erased = it + 1;
@@ -169,7 +165,7 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
                session->lines.size());
 }
 
-void protodb1::RedisServer::HandleCommand(uv_stream_t *stream,
+void protodb1::RedisServer::HandleCommand(RedisClientSession *session,
                                           std::vector<std::string> command_array) {
   auto command = command_array[0];
   spdlog::info("command: '{}' ({} bytes)", command, command.length());
@@ -177,8 +173,14 @@ void protodb1::RedisServer::HandleCommand(uv_stream_t *stream,
     spdlog::info("\targument: '{}' ({} bytes)", *it, (*it).length());
   }
 
+  uv_stream_t *stream =
+      reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
+
   if (command == "PING") {
     WriteResponse(stream, "+PONG\r\n");
+  } else if (command == "SET") {
+    session->GetServer()->storage_engine_->Set(command_array[1].c_str(), command_array[1].length(), command_array[2].c_str(), command_array[2].length());
+    WriteResponse(stream, "+OK\r\n");
   } else {
     char resp_buf[1024];
     auto resp_len = snprintf(resp_buf, 1024, "-ERR unknown command '%s'\r\n",
@@ -226,7 +228,7 @@ void protodb1::RedisServer::WriteResponse(uv_stream_t *stream,
   }
 }
 
-void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server,
+void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server_handle,
                                                      int status) {
   if (status < 0) {
     spdlog::error("new connection error {}", uv_strerror(status));
@@ -235,7 +237,7 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server,
 
   uv_tcp_t *client = static_cast<uv_tcp_t *>(malloc(sizeof(uv_tcp_t)));
 
-  int r = uv_tcp_init(server->loop, client);
+  int r = uv_tcp_init(server_handle->loop, client);
   if (r != 0) {
     spdlog::error(
         "failed to create a handle to accept an incoming connection: {}",
@@ -243,7 +245,7 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server,
     return;
   }
 
-  r = uv_accept(server, reinterpret_cast<uv_stream_t *>(client));
+  r = uv_accept(server_handle, reinterpret_cast<uv_stream_t *>(client));
   if (r != 0) {
     spdlog::error("failed to accept an incoming connection: {}",
                   uv_strerror(r));
@@ -251,17 +253,12 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server,
     return;
   }
 
-  /*
-  r = uv_tcp_nodelay(client, 1);
-  if (r != 0) {
-    spdlog::error("failed to set TCP nodelay: {}", uv_strerror(r));
-    uv_close(reinterpret_cast<uv_handle_t *>(client), nullptr);
-    return;
-  }
-  */
+  auto server = reinterpret_cast<RedisServer *>(server_handle->data);
 
-  auto session = new RedisClientSession(client);
+  auto session = new RedisClientSession(client, server);
   client->data = session;
+
+  uv_stream_set_blocking(reinterpret_cast<uv_stream_t *>(client), 0);
 
   spdlog::info("created session: fd={}", session->GetFileDescriptor());
 
@@ -269,7 +266,9 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server,
                 HandleReadData);
 }
 
-protodb1::RedisServer::RedisServer() {
+protodb1::RedisServer::RedisServer(protodb1::StorageEngine *storage_engine) {
+  storage_engine_ = storage_engine;
+  
   int r = uv_loop_init(&loop);
   if (r != 0) {
     spdlog::error("failed to initialize libuv loop: {}", uv_strerror(r));

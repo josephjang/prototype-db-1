@@ -1,10 +1,14 @@
+#pragma once
+
 #include <uv.h>
 #include "spdlog/spdlog.h"
+
+#include "storage_engine.h"
 
 namespace protodb1 {
 class RedisServer {
  public:
-  RedisServer();
+  RedisServer(protodb1::StorageEngine *storage_engine);
   ~RedisServer();
   void Run();
 
@@ -21,22 +25,27 @@ class RedisServer {
   class RedisClientSession;
   static void ParseLines(RedisClientSession *session);
   static void ParseCommand(RedisClientSession *session);
-  static void HandleCommand(uv_stream_t *stream, std::vector<std::string> command_array);
+  static void HandleCommand(RedisClientSession *session, std::vector<std::string> command_array);
   static void WriteResponse(uv_stream_t *stream, const char *str);
 
+  static void RunServer(void *arg);
+
+  protodb1::StorageEngine *storage_engine_;
   int port = 6379;
   uv_loop_t loop;
   uv_tcp_t server;
 
   class RedisClientSession {
    public:
-    RedisClientSession(uv_tcp_t *tcp_handle) {
+    RedisClientSession(uv_tcp_t *tcp_handle, RedisServer *server) {
       this->tcp_handle = tcp_handle;
       this->fd = tcp_handle->io_watcher.fd;
+      this->server_ = server;
     }
 
     int GetFileDescriptor() { return fd; }
     uv_tcp_t *GetTCPHandle() { return tcp_handle; }
+    RedisServer *GetServer() { return server_; }
 
     std::string incoming_buffer;
     std::vector<std::string> lines;
@@ -44,6 +53,7 @@ class RedisServer {
    private:
     int fd;
     uv_tcp_t *tcp_handle;
+    RedisServer *server_;
   };
 };
 }  // namespace protodb1
