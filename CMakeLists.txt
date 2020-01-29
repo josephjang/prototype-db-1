@@ -29,6 +29,12 @@ target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
 target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
 
 #
+# Libraries: jemalloc
+#
+find_package(Jemalloc REQUIRED)
+target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
+
+#
 # Compiler Tools
 #
 
