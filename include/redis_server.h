@@ -23,10 +23,12 @@ class RedisServer {
   static void HandleSigTerm(uv_signal_t *handle, int signum);
 
   class RedisClientSession;
+
   static void ParseLines(RedisClientSession *session);
   static void ParseCommand(RedisClientSession *session);
   static void HandleCommand(RedisClientSession *session, std::vector<std::string> command_array);
-  static void WriteResponse(uv_stream_t *stream, const char *str);
+  static void AddResponse(RedisClientSession *session, const std::string &response);
+  static void WriteResponse(RedisClientSession *session);
 
   static void RunServer(void *arg);
 
@@ -48,6 +50,7 @@ class RedisServer {
     RedisServer *GetServer() { return server_; }
 
     std::string incoming_buffer;
+    std::string outgoing_buffer;
     std::vector<std::string> lines;
 
    private:

@@ -162,12 +162,14 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
     }
   }
 
+  WriteResponse(session);
+
   session->lines.erase(session->lines.begin(), pos_to_be_erased);
   spdlog::debug("session line buffer truncated: {} lines remaining",
                session->lines.size());
 }
 
-void protodb1::RedisServer::HandleCommand(RedisClientSession *session,
+void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSession *session,
                                           std::vector<std::string> command_array) {
   auto command = command_array[0];
   spdlog::info("command: '{}' ({} bytes)", command, command.length());
@@ -175,35 +177,36 @@ void protodb1::RedisServer::HandleCommand(RedisClientSession *session,
     spdlog::info("\targument: '{}' ({} bytes)", *it, (*it).length());
   }
 
-  uv_stream_t *stream =
-      reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
-
   if (command == "PING") {
-    WriteResponse(stream, "+PONG\r\n");
+    AddResponse(session, "+PONG\r\n");
   } else if (command == "SET") {
-    //session->GetServer()->storage_engine_->Set(command_array[1].c_str(), command_array[1].length(), command_array[2].c_str(), command_array[2].length());
     session->GetServer()->storage_engine_->Set(command_array[1], command_array[2]);
-    WriteResponse(stream, "+OK\r\n");
+    AddResponse(session, "+OK\r\n");
   } else {
     char resp_buf[1024];
     auto resp_len = snprintf(resp_buf, 1024, "-ERR unknown command '%s'\r\n",
                              command.c_str());
-    WriteResponse(stream, resp_buf);
+    AddResponse(session, resp_buf);
   }
 }
 
-void protodb1::RedisServer::WriteResponse(uv_stream_t *stream,
-                                          const char *str) {
-  auto session = static_cast<RedisClientSession *>(stream->data);
+void protodb1::RedisServer::AddResponse(RedisClientSession *session,
+                                        const std::string &response) {
+  session->outgoing_buffer.append(response);
+}
+
+void protodb1::RedisServer::WriteResponse(RedisClientSession *session) {
+  uv_stream_t *stream =
+      reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
 
   uv_buf_t wb;
-  wb.len = strlen(str);
+  wb.len = session->outgoing_buffer.length();
   wb.base = static_cast<char *>(malloc(wb.len));
   if (wb.base == nullptr) {
     spdlog::error("failed to allocate a buffer with the size of {}", wb.len);
     return;
   }
-  memcpy(wb.base, str, wb.len);
+  session->outgoing_buffer.copy(wb.base, wb.len);
 
   /*
     int r = uv_try_write(stream, &wb, 1);
@@ -229,6 +232,8 @@ void protodb1::RedisServer::WriteResponse(uv_stream_t *stream,
                   uv_strerror(r));
     free(w);
   }
+
+  session->outgoing_buffer.clear();
 }
 
 void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server_handle,
