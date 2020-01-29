@@ -90,9 +90,9 @@ void protodb1::RedisServer::ParseLines(RedisClientSession *session) {
   while (pos != std::string::npos) {
     //spdlog::debug("start: {}, pos: {}", start_pos, pos);
     const auto& line = session->incoming_buffer.substr(start_pos, pos - start_pos);
-    session->lines.emplace_back(line);
     SPDLOG_DEBUG("session line parsed: {} bytes", line.length());
     //spdlog::debug("session line parsed: {} bytes, '{}'", line.length(), line);
+    session->lines.emplace_back(std::move(line));
     start_pos = session->incoming_buffer.find_first_not_of("\r\n", pos);
     pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
   }
@@ -133,14 +133,14 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
                 line, bulk_string_length_expected);
             // TODO: consider disconnect
           }
-          command_array.push_back(line);
+          command_array.emplace_back(line);
 
           spdlog::debug("session bulk string fulfilled: {} chars",
                        bulk_string_length_expected);
           bulk_string_expected = false;
           bulk_string_length_expected = -1;
         } else {
-          command_array.push_back(line);
+          command_array.emplace_back(line);
         }
         
         if (array_started && --array_length_remaining <= 0) {
@@ -171,17 +171,24 @@ void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
 
 void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSession *session,
                                           std::vector<std::string> command_array) {
-  auto command = command_array[0];
+  static const std::string &ping_cmd = "PING";
+  static const std::string &set_cmd = "SET";
+  static const std::string &ok_resp = "+OK\r\n";
+  static const std::string &pong_resp = "+PONG\r\n";
+
+  const auto &command = command_array[0];
+  /*
   spdlog::info("command: '{}' ({} bytes)", command, command.length());
   for (auto it = command_array.begin() + 1; it != command_array.end(); it++) {
     spdlog::info("\targument: '{}' ({} bytes)", *it, (*it).length());
   }
+  */
 
-  if (command == "PING") {
-    AddResponse(session, "+PONG\r\n");
-  } else if (command == "SET") {
+  if (command == ping_cmd) {
+    AddResponse(session, pong_resp);
+  } else if (command == set_cmd) {
     session->GetServer()->storage_engine_->Set(command_array[1], command_array[2]);
-    AddResponse(session, "+OK\r\n");
+    AddResponse(session, ok_resp);
   } else {
     char resp_buf[1024];
     auto resp_len = snprintf(resp_buf, 1024, "-ERR unknown command '%s'\r\n",
