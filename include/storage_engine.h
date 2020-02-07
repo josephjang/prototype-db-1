@@ -9,9 +9,7 @@ class StorageEngine {
   StorageEngine();
   ~StorageEngine();
 
-  const char *Get(const char *key_bytes, size_t key_size);
-  void Set(const char *key_bytes, size_t key_size, const char *value_bytes,
-           size_t value_size);
+  const std::string& Get(const std::string &key);
   void Set(const std::string &key, const std::string &value);
   void Delete(const char *key_bytes, size_t key_size);
 

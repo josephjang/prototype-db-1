@@ -281,6 +281,7 @@ void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSess
                                           std::vector<std::string> command_array) {
   static const std::string &ping_cmd = "PING";
   static const std::string &set_cmd = "SET";
+  static const std::string &get_cmd = "GET";
   static const std::string &ok_resp = "+OK\r\n";
   static const std::string &pong_resp = "+PONG\r\n";
 
@@ -297,10 +298,26 @@ void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSess
   } else if (command == set_cmd) {
     session->GetServer()->storage_engine_->Set(command_array[1], command_array[2]);
     AddResponse(session, ok_resp);
+  } else if (command == get_cmd) {
+    const std::string& value = session->GetServer()->storage_engine_->Get(command_array[1]);
+    
+    char resp_buf[1024];
+    auto resp_len = snprintf(resp_buf, 1024, "+%s\r\n", value.c_str());
+    if (resp_len < 0) {
+      spdlog::info("failed to prepare the write buffer: %s", strerror(errno));
+      // TODO: handle failure
+      return;
+    }
+    AddResponse(session, resp_buf);
   } else {
     char resp_buf[1024];
     auto resp_len = snprintf(resp_buf, 1024, "-ERR unknown command '%s'\r\n",
                              command.c_str());
+    if (resp_len < 0) {
+      spdlog::info("failed to prepare the write buffer: %s", strerror(errno));
+      // TODO: handle failure
+      return;
+    }
     AddResponse(session, resp_buf);
   }
 }
