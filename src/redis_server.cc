@@ -84,6 +84,101 @@ void protodb1::RedisServer::HandleReadData(uv_stream_t *stream, ssize_t nread,
 }
 
 void protodb1::RedisServer::ParseLines(protodb1::RedisServer::RedisClientSession *session) {
+
+  // session parsing states
+  bool array_started = false;
+  int array_length_remaining = -1;
+  bool bulk_string_expected = false;
+  int bulk_string_length_expected = -1;
+  auto command_array = std::vector<std::string>();
+
+  // local parsing states
+  std::size_t start_pos = 0;
+  std::size_t pos;
+  bool to_be_erased = false;
+  std::size_t pos_to_be_erased = 0;
+
+  while (start_pos != std::string::npos) {
+    char first_char = session->incoming_buffer.at(start_pos);
+    if (first_char == '*') {
+      pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
+      const auto &line =
+          session->incoming_buffer.substr(start_pos, pos - start_pos);
+      spdlog::debug("session line parsed: {} bytes", line.length());
+
+      array_started = true;
+      array_length_remaining = std::stoi(line.substr(1));
+      // TODO: error handling
+      spdlog::debug("session array starts: {} elements",
+                    array_length_remaining);
+    } else if (first_char == '$') {
+      pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
+      const auto &line =
+          session->incoming_buffer.substr(start_pos, pos - start_pos);
+      spdlog::debug("session line parsed: {} bytes", line.length());
+          
+      bulk_string_expected = true;
+      bulk_string_length_expected = std::stoi(line.substr(1));
+      // TODO: error handling
+      spdlog::debug("session bulk string expected: {} chars",
+                    bulk_string_length_expected);
+    } else {
+      if (bulk_string_expected) {
+        pos = start_pos + bulk_string_length_expected;
+        const auto &line =
+            session->incoming_buffer.substr(start_pos, pos - start_pos);
+        spdlog::debug("session line parsed: {} bytes", line.length());
+
+        command_array.emplace_back(line);
+        spdlog::debug("session bulk string fulfilled: {} chars",
+                      bulk_string_length_expected);
+
+        bulk_string_expected = false;
+        bulk_string_length_expected = -1;
+      } else {
+        pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
+        const auto &line =
+            session->incoming_buffer.substr(start_pos, pos - start_pos);
+        spdlog::debug("session line parsed: {} bytes", line.length());
+
+        command_array.emplace_back(line);
+        spdlog::debug("session string: {}", line);
+      }
+
+      if (array_started && --array_length_remaining <= 0) {
+        HandleCommand(session, command_array);
+        command_array.clear();
+
+        to_be_erased = true;
+
+        spdlog::debug("session array finishes");
+        array_started = false;
+        array_length_remaining = -1;
+      } else if (!array_started) {
+        HandleCommand(session, command_array);
+        command_array.clear();
+
+        to_be_erased = true;
+      }
+
+    }
+    start_pos = session->incoming_buffer.find_first_not_of("\r\n", pos);
+    if (to_be_erased) {
+      pos_to_be_erased = start_pos;
+    }
+    spdlog::debug("session start_pos changed: {}", start_pos);
+  }
+
+  
+  session->incoming_buffer.erase(0, pos_to_be_erased);
+  SPDLOG_DEBUG("session incoming buffer remaining after truncated: {} bytes",
+               session->incoming_buffer.length());
+
+  WriteResponse(session);
+}
+
+/*
+void protodb1::RedisServer::ParseLines(protodb1::RedisServer::RedisClientSession *session) {
   auto start_pos = 0;
   auto pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
 
@@ -168,6 +263,7 @@ void protodb1::RedisServer::ParseCommand(protodb1::RedisServer::RedisClientSessi
   spdlog::debug("session line buffer truncated: {} lines remaining",
                session->lines.size());
 }
+*/
 
 void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSession *session,
                                           std::vector<std::string> command_array) {
