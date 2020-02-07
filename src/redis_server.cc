@@ -2,6 +2,8 @@
 
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <charconv>
 
 void protodb1::RedisServer::AllocateBuffer(uv_handle_t *handle,
                                            size_t suggested_size,
@@ -98,49 +100,59 @@ void protodb1::RedisServer::ParseLines(protodb1::RedisServer::RedisClientSession
   bool to_be_erased = false;
   std::size_t pos_to_be_erased = 0;
 
-  while (start_pos != std::string::npos) {
-    char first_char = session->incoming_buffer.at(start_pos);
-    if (first_char == '*') {
-      pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
-      const auto &line =
-          session->incoming_buffer.substr(start_pos, pos - start_pos);
-      spdlog::debug("session line parsed: {} bytes", line.length());
+  const auto& buffer_view = std::string_view(session->incoming_buffer);
 
+  while (start_pos != std::string::npos) {
+    char first_char = buffer_view.at(start_pos);
+    if (first_char == '*') {
+      pos = buffer_view.find_first_of("\r\n", start_pos);
+
+      const auto &line =
+          buffer_view.substr(start_pos, pos - start_pos);
+      spdlog::debug("session line parsed: {} bytes", line.length());
+    
       array_started = true;
-      array_length_remaining = std::stoi(line.substr(1));
-      // TODO: error handling
+      auto [p, ec] = std::from_chars(
+          line.data() + 1, line.data() + line.length(), array_length_remaining);
+      if (ec == std::errc()) {
+        // TODO: error handling
+      }
       spdlog::debug("session array starts: {} elements",
                     array_length_remaining);
     } else if (first_char == '$') {
-      pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
+      pos = buffer_view.find_first_of("\r\n", start_pos);
       const auto &line =
-          session->incoming_buffer.substr(start_pos, pos - start_pos);
+          buffer_view.substr(start_pos, pos - start_pos);
       spdlog::debug("session line parsed: {} bytes", line.length());
           
       bulk_string_expected = true;
-      bulk_string_length_expected = std::stoi(line.substr(1));
-      // TODO: error handling
+      auto [p, ec] =
+          std::from_chars(line.data() + 1, line.data() + line.length(),
+                          bulk_string_length_expected);
+      if (ec == std::errc()) {
+        // TODO: error handling
+      }
       spdlog::debug("session bulk string expected: {} chars",
                     bulk_string_length_expected);
     } else {
       if (bulk_string_expected) {
         pos = start_pos + bulk_string_length_expected;
         const auto &line =
-            session->incoming_buffer.substr(start_pos, pos - start_pos);
+            buffer_view.substr(start_pos, pos - start_pos);
         spdlog::debug("session line parsed: {} bytes", line.length());
 
         command_array.emplace_back(line);
         spdlog::debug("session bulk string fulfilled: {} chars",
                       bulk_string_length_expected);
-
+                      
         bulk_string_expected = false;
         bulk_string_length_expected = -1;
       } else {
-        pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
+        pos = buffer_view.find_first_of("\r\n", start_pos);
         const auto &line =
-            session->incoming_buffer.substr(start_pos, pos - start_pos);
+            buffer_view.substr(start_pos, pos - start_pos);
         spdlog::debug("session line parsed: {} bytes", line.length());
-
+        
         command_array.emplace_back(line);
         spdlog::debug("session string: {}", line);
       }
@@ -162,7 +174,7 @@ void protodb1::RedisServer::ParseLines(protodb1::RedisServer::RedisClientSession
       }
 
     }
-    start_pos = session->incoming_buffer.find_first_not_of("\r\n", pos);
+    start_pos = buffer_view.find_first_not_of("\r\n", pos);
     if (to_be_erased) {
       pos_to_be_erased = start_pos;
     }
