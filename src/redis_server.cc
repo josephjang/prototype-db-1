@@ -83,7 +83,7 @@ void protodb1::RedisServer::HandleReadData(uv_stream_t *stream, ssize_t nread,
   ParseLines(session);
 }
 
-void protodb1::RedisServer::ParseLines(RedisClientSession *session) {
+void protodb1::RedisServer::ParseLines(protodb1::RedisServer::RedisClientSession *session) {
   auto start_pos = 0;
   auto pos = session->incoming_buffer.find_first_of("\r\n", start_pos);
 
@@ -102,7 +102,7 @@ void protodb1::RedisServer::ParseLines(RedisClientSession *session) {
   ParseCommand(session);
 }
 
-void protodb1::RedisServer::ParseCommand(RedisClientSession *session) {
+void protodb1::RedisServer::ParseCommand(protodb1::RedisServer::RedisClientSession *session) {
   bool array_started = false;
   int array_length_remaining = -1;
   bool bulk_string_expected = false;
@@ -197,12 +197,12 @@ void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSess
   }
 }
 
-void protodb1::RedisServer::AddResponse(RedisClientSession *session,
+void protodb1::RedisServer::AddResponse(protodb1::RedisServer::RedisClientSession *session,
                                         const std::string &response) {
   session->outgoing_buffer.append(response);
 }
 
-void protodb1::RedisServer::WriteResponse(RedisClientSession *session) {
+void protodb1::RedisServer::WriteResponse(protodb1::RedisServer::RedisClientSession *session) {
   uv_stream_t *stream =
       reinterpret_cast<uv_stream_t *>(session->GetTCPHandle());
 
