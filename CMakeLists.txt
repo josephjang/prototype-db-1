@@ -17,7 +17,7 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 #
 
 add_executable(protodb1 src/main.cc)
-target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
 target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
 
 #
