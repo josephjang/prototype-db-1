@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <unordered_map>
+#include <shared_mutex>
 
 namespace protodb1 {
 class StorageEngine {
@@ -15,5 +16,6 @@ class StorageEngine {
 
  private:
   std::unordered_map<std::string, std::string> main_table_;
-  };
+  std::shared_mutex mutex_;
+};
 }  // namespace protodb1
