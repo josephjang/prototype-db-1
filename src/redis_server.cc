@@ -285,6 +285,7 @@ void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSess
   static const std::string &del_cmd = "DEL";
   static const std::string &ok_resp = "+OK\r\n";
   static const std::string &pong_resp = "+PONG\r\n";
+  static const std::string &null_resp = "$-1\r\n";
 
   const auto &command = command_array[0];
   /*
@@ -300,16 +301,20 @@ void protodb1::RedisServer::HandleCommand(protodb1::RedisServer::RedisClientSess
     session->GetServer()->storage_engine_->Set(command_array[1], command_array[2]);
     AddResponse(session, ok_resp);
   } else if (command == get_cmd) {
-    const std::string& value = session->GetServer()->storage_engine_->Get(command_array[1]);
-    
+    const auto& option = session->GetServer()->storage_engine_->Get(command_array[1]);
+
     char resp_buf[1024];
-    auto resp_len = snprintf(resp_buf, 1024, "+%s\r\n", value.c_str());
-    if (resp_len < 0) {
-      spdlog::info("failed to prepare the write buffer: %s", strerror(errno));
-      // TODO: handle failure
-      return;
+    if (option) {
+      auto resp_len = snprintf(resp_buf, 1024, "+%s\r\n", option->c_str());
+      if (resp_len < 0) {
+        spdlog::info("failed to prepare the write buffer: %s", strerror(errno));
+        // TODO: handle failure
+        return;
+      }
+      AddResponse(session, resp_buf);
+    } else {
+      AddResponse(session, null_resp);
     }
-    AddResponse(session, resp_buf);
   } else if (command == del_cmd) {
     auto deleted = session->GetServer()->storage_engine_->Delete(command_array[1]);
     

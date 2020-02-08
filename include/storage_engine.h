@@ -9,7 +9,7 @@ class StorageEngine {
   StorageEngine();
   ~StorageEngine();
 
-  const std::string& Get(const std::string &key);
+  const std::optional<const std::string> Get(const std::string &key);
   void Set(const std::string &key, const std::string &value);
   size_t Delete(const std::string &key);
 
