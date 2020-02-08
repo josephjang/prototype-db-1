@@ -8,7 +8,7 @@
 namespace protodb1 {
 class RedisServer {
  public:
-  RedisServer(protodb1::StorageEngine *storage_engine);
+  RedisServer(protodb1::StorageEngine *storage_engine, size_t num_threads);
   ~RedisServer();
   void Run();
 
@@ -33,6 +33,7 @@ class RedisServer {
   static void RunServer(void *arg);
 
   protodb1::StorageEngine *storage_engine_;
+  size_t num_threads_;
   int port = 6379;
   uv_loop_t loop;
 

@@ -423,8 +423,9 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server_handle,
                 HandleReadData);
 }
 
-protodb1::RedisServer::RedisServer(protodb1::StorageEngine *storage_engine) {
+protodb1::RedisServer::RedisServer(protodb1::StorageEngine *storage_engine, size_t num_threads) {
   storage_engine_ = storage_engine;
+  num_threads_ = num_threads;
   
   int r = uv_loop_init(&loop);
   if (r != 0) {
@@ -465,7 +466,7 @@ void protodb1::RedisServer::Run() {
   uv_signal_init(&loop, &sigterm);
   uv_signal_start(&sigterm, HandleSigTerm, SIGTERM);
 
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < num_threads_; i++) {
     uv_thread_t thread_handle;
     uv_thread_create(&thread_handle, RunServer, this);
   }
