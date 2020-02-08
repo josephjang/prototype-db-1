@@ -471,9 +471,7 @@ void protodb1::RedisServer::Run() {
   }
 
   uv_run(&loop, UV_RUN_DEFAULT);
-  spdlog::warn("uv loop is finished");
-
-  uv_close(reinterpret_cast<uv_handle_t *>(&server), HandleClose);
+  spdlog::warn("main uv loop is finished");
 }
 
 void protodb1::RedisServer::RunServer(void *arg) {

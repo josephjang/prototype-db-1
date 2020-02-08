@@ -35,7 +35,6 @@ class RedisServer {
   protodb1::StorageEngine *storage_engine_;
   int port = 6379;
   uv_loop_t loop;
-  uv_tcp_t server;
 
   class RedisClientSession {
    public:
