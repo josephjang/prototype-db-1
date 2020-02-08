@@ -9,7 +9,7 @@ const std::string& StorageEngine::Get(const std::string& key) {
 }
 
 void StorageEngine::Set(const std::string& key, const std::string& value) {
-  main_table_.emplace(key, value);
+  main_table_.insert_or_assign(key, value);
 }
 
 size_t StorageEngine::Delete(const std::string& key) {
