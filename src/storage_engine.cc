@@ -12,8 +12,8 @@ void StorageEngine::Set(const std::string& key, const std::string& value) {
   main_table_.emplace(key, value);
 }
 
-void StorageEngine::Delete(const char *key_bytes, size_t key_size) {
-  main_table_.erase(key_bytes);
+size_t StorageEngine::Delete(const std::string& key) {
+  return main_table_.erase(key);
 }
 
 }  // namespace protodb1

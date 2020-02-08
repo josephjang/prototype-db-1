@@ -11,7 +11,7 @@ class StorageEngine {
 
   const std::string& Get(const std::string &key);
   void Set(const std::string &key, const std::string &value);
-  void Delete(const char *key_bytes, size_t key_size);
+  size_t Delete(const std::string &key);
 
  private:
   std::unordered_map<std::string, std::string> main_table_;
