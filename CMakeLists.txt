@@ -17,22 +17,43 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 #
 
 add_executable(protodb1 src/main.cc)
-target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
+
 target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
+
+target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
+target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
+
+target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
+target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
+
+#
+# Target: storage_engine_benchmark
+#
+
+add_executable(storage_engine_benchmark benchmark/storage_engine_benchmark.cc)
+
+target_sources(storage_engine_benchmark PRIVATE src/storage_engine.cc)
+
+target_include_directories(storage_engine_benchmark PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
+
+target_link_libraries(storage_engine_benchmark PRIVATE "${JEMALLOC_LIBRARIES}")
+target_link_libraries(storage_engine_benchmark PRIVATE "${GOOGLE_BENCHMARK_LIBRARIES}")
 
 #
 # Libraries: Libuv
 #
 
 find_package(Libuv REQUIRED)
-target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
-target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
 
 #
 # Libraries: jemalloc
 #
 find_package(Jemalloc REQUIRED)
-target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
+
+#
+# Libraries: google-benchmark
+#
+find_package(GoogleBenchmark REQUIRED)
 
 #
 # Compiler Tools
