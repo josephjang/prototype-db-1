@@ -30,6 +30,8 @@ target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
 # Target: storage_engine_benchmark
 #
 
+add_subdirectory("${CMAKE_SOURCE_DIR}/thirdparty/abseil-cpp")
+
 add_executable(storage_engine_benchmark benchmark/storage_engine_benchmark.cc)
 
 target_sources(storage_engine_benchmark PRIVATE src/storage_engine.cc)
@@ -38,6 +40,7 @@ target_include_directories(storage_engine_benchmark PRIVATE "${CMAKE_SOURCE_DIR}
 
 target_link_libraries(storage_engine_benchmark PRIVATE "${JEMALLOC_LIBRARIES}")
 target_link_libraries(storage_engine_benchmark PRIVATE "${GOOGLE_BENCHMARK_LIBRARIES}")
+target_link_libraries(storage_engine_benchmark PRIVATE absl::flat_hash_map)
 
 #
 # Libraries: Libuv
