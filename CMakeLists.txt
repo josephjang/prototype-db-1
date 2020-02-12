@@ -41,6 +41,8 @@ target_include_directories(storage_engine_benchmark PRIVATE "${CMAKE_SOURCE_DIR}
 target_link_libraries(storage_engine_benchmark PRIVATE "${JEMALLOC_LIBRARIES}")
 target_link_libraries(storage_engine_benchmark PRIVATE "${GOOGLE_BENCHMARK_LIBRARIES}")
 target_link_libraries(storage_engine_benchmark PRIVATE absl::flat_hash_map)
+target_link_libraries(storage_engine_benchmark PRIVATE folly)
+target_link_libraries(storage_engine_benchmark PRIVATE glog)
 
 #
 # Libraries: Libuv
@@ -57,6 +59,12 @@ find_package(Jemalloc REQUIRED)
 # Libraries: google-benchmark
 #
 find_package(GoogleBenchmark REQUIRED)
+
+#
+# Libraries: folly
+#
+find_package(folly REQUIRED)
+find_package(glog REQUIRED)
 
 #
 # Compiler Tools

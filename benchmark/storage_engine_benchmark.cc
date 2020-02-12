@@ -3,6 +3,7 @@
 #include "storage_engine.h"
 #include "libcuckoo/cuckoohash_map.hh"
 #include "absl/container/flat_hash_map.h"
+#include <folly/concurrency/ConcurrentHashMap.h>
 
 namespace protodb1 {
 
@@ -151,6 +152,45 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, AbseilFlatHashMapGet)(benchmark::Stat
   state.SetItemsProcessed(state.iterations() * num_keys_);
 }
 BENCHMARK_REGISTER_F(StorageEngineBenchmark, AbseilFlatHashMapGet)->UseRealTime()->Unit(benchmark::kMillisecond);
+
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, FollyConcurrentHashMapSet)(benchmark::State& state) {
+  folly::ConcurrentHashMap<std::string, std::string> map;
+  if (state.thread_index == 0) {
+    SetUpKeys();
+  }
+
+  for (auto _ : state) {
+    for (int i = 0; i < 100000; i++) {
+      //map.insert_or_assign(keys_[i], keys_[i]);
+      map.insert(keys_[i], keys_[i]);
+    }
+  }
+  
+  state.SetItemsProcessed(state.iterations() * num_keys_);
+}
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, FollyConcurrentHashMapSet)->UseRealTime()->Unit(benchmark::kMillisecond);
+
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, FollyConcurrentHashMapGet)(benchmark::State& state) {
+  folly::ConcurrentHashMap<std::string, std::string> map;
+  if (state.thread_index == 0) {
+    SetUpKeys();
+    for (int i = 0; i < 100000; i++) {
+      map.insert_or_assign(keys_[i], keys_[i]);
+    }
+  }
+
+  for (auto _ : state) {
+    for (int i = 0; i < 100000; i++) {
+      auto it = map.find(keys_[i]);
+      if (it != map.end()) {
+        *it;
+      }
+    }
+  }
+  
+  state.SetItemsProcessed(state.iterations() * num_keys_);
+}
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, FollyConcurrentHashMapGet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
 BENCHMARK_DEFINE_F(StorageEngineBenchmark, Protodb1StorageEngineSet)(benchmark::State& state) {
   protodb1::StorageEngine storage_engine;
