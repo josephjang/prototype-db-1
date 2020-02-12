@@ -79,6 +79,22 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, CuckoohashMapSet)(benchmark::State& s
 }
 BENCHMARK_REGISTER_F(StorageEngineBenchmark, CuckoohashMapSet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, CuckoohashMapSetWithAbseilHash)(benchmark::State& state) {
+  libcuckoo::cuckoohash_map<std::string, std::string, absl::container_internal::hash_default_hash<std::string>> map;
+  if (state.thread_index == 0) {
+    SetUpKeys();
+  }
+
+  for (auto _ : state) {
+    for (int i = 0; i < 100000; i++) {
+      map.insert_or_assign(keys_[i], keys_[i]);
+    }
+  }
+  
+  state.SetItemsProcessed(state.iterations() * num_keys_);
+}
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, CuckoohashMapSetWithAbseilHash)->UseRealTime()->Unit(benchmark::kMillisecond);
+
 BENCHMARK_DEFINE_F(StorageEngineBenchmark, CuckoohashMapGet)(benchmark::State& state) {
   libcuckoo::cuckoohash_map<std::string, std::string> map;
   if (state.thread_index == 0) {
