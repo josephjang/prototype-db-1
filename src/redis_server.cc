@@ -20,7 +20,7 @@ void protodb1::RedisServer::AllocateBuffer(uv_handle_t *handle,
 void protodb1::RedisServer::HandleClose(uv_handle_t *handle) {
   auto session = static_cast<RedisClientSession *>(handle->data);
   if (session != nullptr) {
-    spdlog::info("closed session: fd={}", session->GetFileDescriptor());
+    SPDLOG_DEBUG("closed session: fd={}", session->GetFileDescriptor());
     delete session;
   }
   free(handle);
@@ -55,7 +55,7 @@ void protodb1::RedisServer::HandleReadData(uv_stream_t *stream, ssize_t nread,
   }
 
   if (nread == UV_EOF) {
-    spdlog::info("end of file: fd={}", session->GetFileDescriptor());
+    SPDLOG_DEBUG("end of file: fd={}", session->GetFileDescriptor());
 
     uv_close(reinterpret_cast<uv_handle_t *>(stream), HandleClose);
     return;
@@ -417,7 +417,7 @@ void protodb1::RedisServer::HandleIncomingConnection(uv_stream_t *server_handle,
 
   uv_stream_set_blocking(reinterpret_cast<uv_stream_t *>(client), 0);
 
-  spdlog::info("created session: fd={}", session->GetFileDescriptor());
+  SPDLOG_DEBUG("created session: fd={}", session->GetFileDescriptor());
 
   uv_read_start(reinterpret_cast<uv_stream_t *>(client), AllocateBuffer,
                 HandleReadData);
