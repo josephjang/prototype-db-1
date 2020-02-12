@@ -25,6 +25,9 @@ target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
 
 target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
 target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
+target_link_libraries(protodb1 PRIVATE folly)
+target_link_libraries(protodb1 PRIVATE glog)
+target_link_libraries(protodb1 PRIVATE pthread)
 
 #
 # Target: storage_engine_benchmark
@@ -64,7 +67,7 @@ find_package(GoogleBenchmark REQUIRED)
 # Libraries: folly
 #
 find_package(folly REQUIRED)
-find_package(glog REQUIRED)
+#find_package(glog REQUIRED)
 
 #
 # Compiler Tools
