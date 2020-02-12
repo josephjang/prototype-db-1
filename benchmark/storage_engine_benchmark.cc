@@ -152,7 +152,7 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, AbseilFlatHashMapGet)(benchmark::Stat
 }
 BENCHMARK_REGISTER_F(StorageEngineBenchmark, AbseilFlatHashMapGet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
-BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_Set)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, Protodb1StorageEngineSet)(benchmark::State& state) {
   protodb1::StorageEngine storage_engine;
   if (state.thread_index == 0) {
     SetUpKeys();
@@ -166,10 +166,10 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_Set)(benchmark::State& state) {
 
   state.SetItemsProcessed(state.iterations() * num_keys_);
 }
-BENCHMARK_REGISTER_F(StorageEngineBenchmark, BM_Set)->UseRealTime()->Unit(benchmark::kMillisecond);
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, Protodb1StorageEngineSet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
 
-BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_Get)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, Protodb1StorageEngineGet)(benchmark::State& state) {
   protodb1::StorageEngine storage_engine;
   if (state.thread_index == 0) {
     SetUpKeys();
@@ -186,9 +186,9 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_Get)(benchmark::State& state) {
 
   state.SetItemsProcessed(state.iterations() * num_keys_);
 }
-BENCHMARK_REGISTER_F(StorageEngineBenchmark, BM_Get)->UseRealTime()->Unit(benchmark::kMillisecond);
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, Protodb1StorageEngineGet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
-BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_GetAndSet)
+BENCHMARK_DEFINE_F(StorageEngineBenchmark, Protodb1StorageEngineGetAndSet)
 (benchmark::State& state) {
   protodb1::StorageEngine storage_engine;
   if (state.thread_index == 0) {
@@ -206,7 +206,7 @@ BENCHMARK_DEFINE_F(StorageEngineBenchmark, BM_GetAndSet)
   
   state.SetItemsProcessed(state.iterations() * num_keys_ * 2);
 }
-BENCHMARK_REGISTER_F(StorageEngineBenchmark, BM_GetAndSet)->UseRealTime()->Unit(benchmark::kMillisecond);
+BENCHMARK_REGISTER_F(StorageEngineBenchmark, Protodb1StorageEngineGetAndSet)->UseRealTime()->Unit(benchmark::kMillisecond);
 
 }  // namespace protodb1
 
