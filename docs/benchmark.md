@@ -177,3 +177,47 @@ Totals    6890682.76         0.00   6263630.63      0.99000    292289.44
 Totals    7333200.74         0.00   6666523.57      1.08600    311186.89
 Totals    7756781.32         0.00   7051591.22      1.23200    329149.37
 ```
+
+## protodb1 (libcuckoo) Benchmarks with Pipelined Requests
+
+* Date: 2020-02-13
+* Commit: N/A
+* Test Command:
+```
+$ ./memtier_benchmark --hide-histogram --threads 8 –data-size 8 --pipeline=16 --test-time=10
+```
+### protodb1 (libcuckoo), 1 threads, 16 pipeline
+
+```
+Type         Ops/sec     Hits/sec   Misses/sec      Latency       KB/sec 
+Totals    1760788.61         0.00   1600696.63      3.63000     74694.83
+Totals    1793257.74         0.00   1630203.85      4.45500     76066.91
+Totals    1774715.89         0.00   1613346.67      5.40400     75280.32
+```
+
+### protodb1 (libcuckoo), 2 threads, 16 pipeline
+
+```
+Type         Ops/sec     Hits/sec   Misses/sec      Latency       KB/sec 
+Totals    2967702.33         0.00   2697894.22      2.15100    125903.06
+Totals    3182514.66         0.00   2893167.94      2.50800    135015.58
+Totals    3271583.48         0.00   2974148.56      2.92800    138787.58
+```
+
+### protodb1 (libcuckoo), 4 threads, 16 pipeline
+
+```
+Type         Ops/sec     Hits/sec   Misses/sec      Latency       KB/sec 
+Totals    5431426.92         0.00   4937642.49      1.17400    230467.36
+Totals    5297065.83         0.00   4815492.30      1.50500    224754.59
+Totals    5189933.00         0.00   4718094.15      1.84400    220198.59
+```
+
+### protodb1 (libcuckoo), 8 threads, 16 pipeline
+
+```
+Type         Ops/sec     Hits/sec   Misses/sec      Latency       KB/sec 
+Totals    6428607.97         0.00   5844171.25      0.99100    272801.25
+Totals    7313744.93         0.00   6648835.68      1.08900    310353.87
+Totals    7828706.16         0.00   7116977.90      1.22100    332198.82
+```
