@@ -8,19 +8,19 @@ const std::optional<const std::string> StorageEngine::Get(const std::string& key
 #if RWLOCK_IN_STORAGE_ENGINE
   std::shared_lock lock(mutex_);
 #endif
-#if !USE_LIBCUCKOO_STORAGE_ENGINE
-  auto it = main_table_.find(key);
-  if (it == main_table_.end()) {
-    return std::nullopt;
-  }
-  return it->second;
-#else
+#if USE_LIBCUCKOO_STORAGE_ENGINE
   std::string value;
   if (main_table_.find(key, value)) {
     return value;
   } else {
     return std::nullopt;
   }
+#else
+  auto it = main_table_.find(key);
+  if (it == main_table_.end()) {
+    return std::nullopt;
+  }
+  return it->second;
 #endif
 }
 
