@@ -3,7 +3,7 @@
 #include "spdlog/spdlog.h"
 #include "cxxopts.hpp"
 
-const cxxopts::ParseResult parseCommandlineArgs(int argc, char *argv[]) noexcept {
+const cxxopts::ParseResult& ParseCommandlineArgs(int argc, char *argv[]) noexcept {
   try {
     cxxopts::Options options("protodb1", "prototype database #1");
     options.add_options()("threads", "Number of threads",
@@ -17,15 +17,15 @@ const cxxopts::ParseResult parseCommandlineArgs(int argc, char *argv[]) noexcept
 }
 
 int main(int argc, char *argv[]) {
-  auto result = parseCommandlineArgs(argc, argv);
+  const auto& result = ParseCommandlineArgs(argc, argv);
 
-  size_t num_threads = result["threads"].as<size_t>();
+  auto num_threads = result["threads"].as<size_t>();
 
   spdlog::set_level(spdlog::level::info);
 
   protodb1::StorageEngine storage_engine;
-  protodb1::RedisServer redisServer(&storage_engine, num_threads);
-  redisServer.Run();
+  protodb1::RedisServer redis_server(&storage_engine, num_threads);
+  redis_server.Run();
 
   return 0;
 }

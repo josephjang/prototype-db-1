@@ -1,8 +1,8 @@
 #include "storage_engine.h"
 
 namespace protodb1 {
-StorageEngine::StorageEngine() {}
-StorageEngine::~StorageEngine() {}
+StorageEngine::StorageEngine() = default;
+StorageEngine::~StorageEngine() = default;
 
 const std::optional<const std::string> StorageEngine::Get(const std::string& key) {
 #if RWLOCK_IN_STORAGE_ENGINE
@@ -12,9 +12,8 @@ const std::optional<const std::string> StorageEngine::Get(const std::string& key
   std::string value;
   if (main_table_.find(key, value)) {
     return value;
-  } else {
-    return std::nullopt;
   }
+  return std::nullopt;
 #else
   auto it = main_table_.find(key);
   if (it == main_table_.end()) {
