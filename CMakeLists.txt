@@ -74,6 +74,7 @@ find_package(folly REQUIRED)
 #
 
 set(CLANG_FORMAT_VERSION_PATTERN "9")
+set(CLANG_TIDY_VERSION_PATTERN "9")
 find_package(ClangTools)
 
 #
@@ -98,3 +99,17 @@ if(${CLANG_FORMAT_FOUND})
     ${BUILD_SUPPORT_DIR}/clang_format_exclusions.txt --source_dir
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 endif()
+
+#
+# make check-clang-tidy
+#
+# Copied from https://github.com/cmu-db/terrier/blob/master/CMakeLists.txt
+#
+
+if (${CLANG_TIDY_FOUND})
+    add_custom_target(check-clang-tidy
+            ${BUILD_SUPPORT_DIR}/run-clang-tidy.py                            # run LLVM's clang-tidy script
+            -clang-tidy-binary ${CLANG_TIDY_BIN}                              # using our clang-tidy binary
+            -p ${CMAKE_BINARY_DIR}                                            # using cmake's generated compile commands
+            )
+endif ()

@@ -25,3 +25,29 @@ else()
   set(CLANG_FORMAT_FOUND 0)
   message(STATUS "clang-format not found")
 endif()
+
+find_program(
+  CLANG_TIDY_BIN
+  NAMES clang-tidy
+  PATHS ${CLANG_TOOLS_SEARCH_PATHS}
+  NO_DEFAULT_PATH)
+
+if(CLANG_TIDY_BIN)
+  unset(CLANG_TIDY_VERSION_MESSAGE)
+  execute_process(
+    COMMAND ${CLANG_TIDY_BIN} "-version"
+    OUTPUT_VARIABLE CLANG_TIDY_VERSION_MESSAGE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT (${CLANG_TIDY_VERSION_MESSAGE} MATCHES
+          ${CLANG_TIDY_VERSION_PATTERN}))
+    set(CLANG_TIDY_BIN "CLANG_TIDY_BIN-NOTFOUND")
+  endif()
+endif()
+
+if(CLANG_TIDY_BIN)
+  set(CLANG_TIDY_FOUND 1)
+  message(STATUS "clang-format found at ${CLANG_TIDY_BIN}")
+else()
+  set(CLANG_TIDY_FOUND 0)
+  message(STATUS "clang-format not found")
+endif()
