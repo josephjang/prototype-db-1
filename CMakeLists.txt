@@ -20,14 +20,21 @@ add_executable(protodb1 src/main.cc)
 
 target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
 
-target_include_directories(protodb1 PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
-target_include_directories(protodb1 PRIVATE "${LIBUV_INCLUDE_DIRS}")
+target_include_directories(protodb1
+  PRIVATE 
+    "${CMAKE_SOURCE_DIR}/include"
+    "${CMAKE_SOURCE_DIR}/thirdparty"
+    "${LIBUV_INCLUDE_DIRS}"
+)
 
-target_link_libraries(protodb1 PRIVATE "${LIBUV_LIBRARIES}")
-target_link_libraries(protodb1 PRIVATE "${JEMALLOC_LIBRARIES}")
-target_link_libraries(protodb1 PRIVATE folly)
-target_link_libraries(protodb1 PRIVATE glog)
-target_link_libraries(protodb1 PRIVATE pthread)
+target_link_libraries(protodb1
+  PRIVATE 
+    "${LIBUV_LIBRARIES}"
+    "${JEMALLOC_LIBRARIES}"
+    folly
+    glog
+    pthread
+)
 
 #
 # Target: storage_engine_benchmark
@@ -39,13 +46,20 @@ add_executable(storage_engine_benchmark benchmark/storage_engine_benchmark.cc)
 
 target_sources(storage_engine_benchmark PRIVATE src/storage_engine.cc)
 
-target_include_directories(storage_engine_benchmark PRIVATE "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/thirdparty")
+target_include_directories(storage_engine_benchmark
+  PRIVATE
+    "${CMAKE_SOURCE_DIR}/include"
+    "${CMAKE_SOURCE_DIR}/thirdparty"
+)
 
-target_link_libraries(storage_engine_benchmark PRIVATE "${JEMALLOC_LIBRARIES}")
-target_link_libraries(storage_engine_benchmark PRIVATE "${GOOGLE_BENCHMARK_LIBRARIES}")
-target_link_libraries(storage_engine_benchmark PRIVATE absl::flat_hash_map)
-target_link_libraries(storage_engine_benchmark PRIVATE folly)
-target_link_libraries(storage_engine_benchmark PRIVATE glog)
+target_link_libraries(storage_engine_benchmark
+  PRIVATE
+    "${JEMALLOC_LIBRARIES}"
+    "${GOOGLE_BENCHMARK_LIBRARIES}"
+    absl::flat_hash_map
+    folly
+    glog
+)
 
 #
 # Libraries: Libuv
