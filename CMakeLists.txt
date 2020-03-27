@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.5.1)
 
-project(prototype-db-1)
+project(prototype-db-1 VERSION 0.0.1 LANGUAGES CXX)
+
+#
+# Common properties
+#
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -fsanitize=address")
 
@@ -17,6 +23,8 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 #
 
 add_executable(protodb1 src/main.cc)
+
+target_compile_features(protodb1 PRIVATE cxx_std_17)
 
 target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
 
