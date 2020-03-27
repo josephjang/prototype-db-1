@@ -24,6 +24,12 @@ set(BUILD_SUPPORT_DIR ${CMAKE_SOURCE_DIR}/build-support)
 
 add_executable(protodb1 src/main.cc)
 
+target_compile_definitions(protodb1
+  PRIVATE
+    USE_LIBCUCKOO_STORAGE_ENGINE=1
+    USE_FOLLY_STORAGE_ENGINE=0 
+)
+
 target_compile_features(protodb1 PRIVATE cxx_std_17)
 
 target_sources(protodb1 PRIVATE src/echo_server.cc src/redis_server.cc src/storage_engine.cc)
