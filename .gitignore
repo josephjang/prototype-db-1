@@ -11,3 +11,4 @@
 # Misc. tool files
 
 /Pipfile.lock
+/.clangd
